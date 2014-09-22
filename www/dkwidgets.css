@@ -1,0 +1,29 @@
+.gmisc_table {
+    width:100%;
+    border: 0;
+    outline: 0;
+}
+
+.accordion-heading
+.accordion-toggle {
+  background-color: gainsboro;
+}
+
+.accordion-body {
+  border: 1px solid #E3E3E3;
+  border-radius: 4px;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+
+.handsontable.listbox {
+  bottom: 5em;
+}
+
+.ui-slider-horizontal {
+  margin-top: 2em;
+  margin-bottom: 3.5em;
+}
+
+.ui-slider-horizontal.ui-slider-pips {
+  margin-bottom:2em;
+}
