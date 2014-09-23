@@ -4,6 +4,7 @@ library(dplyr)
 library(tidyr)
 library(dkslider)
 library(lubridate)
+library(dygraphs)
 source("utils.r")
 
 convert90s = function(x) {
@@ -23,32 +24,50 @@ Data2014 = read.csv(file="DataJuly2014.csv", stringsAsFactors=F) %>%
   mutate(RefDate = as.Date(RefDate, format="%d/%m/%Y"), 
          ApptDate = as.Date(ApptDate, format="%d/%m/%Y")) %>%
   filter(CancelFlag=="N")
-
-refs = Data2014 %>%
-  select(RefDate, ApptLength, OutpatientFlag) %>%
-  filter(year(RefDate)==2013) %>%
-  arrange(OutpatientFlag, RefDate) %>%
-  convert90s()
-
-cat("Loaded", nrow(refs), "new patient referrals from 1/1/2013 to 31/12/2013\n")
-
-# replicate refs for 10 years
-x=refs
-for (i in 1:5) {
-  x$RefDate = x$RefDate + 365
-  refs = rbind(refs, x)
-}
-cat("Replicated 2013 * 5 times\n")
-
-waiting = Data2014 %>%
-  filter(RefDate < as.Date("2013-01-01"), ApptDate > as.Date("2013-01-01")) %>%
-  select(RefDate, ApptLength, OutpatientFlag) %>%
-  arrange(OutpatientFlag, RefDate) %>%
-  convert90s()
-
-cat("Loaded", nrow(waiting),"patients into waiting list as at 1/1/2013\n")
+cat("Loaded", nrow(Data2014),"patients into database\n")
 
 shinyServer(function(input, output, session) {
+  
+  getStartDate = reactive({
+    refYear = input$referralYear
+    as.Date(paste0(refYear, "-01-01"))
+  })
+  
+  getReferrals = reactive({
+    refYear = as.numeric(input$referralYear)
+    refs = Data2014 %>%
+      select(RefDate, ApptLength, OutpatientFlag) %>%
+      filter(year(RefDate)==refYear, ApptLength != 20) %>%
+      arrange(OutpatientFlag, RefDate) %>%
+      convert90s()
+    
+    # update referral stats
+    updateNumericInput(session, "refTotal", value=nrow(refs))
+    apptTable = cumsum(table(refs$ApptLength)/nrow(refs)*100)
+    updateDkSlider(session, "apptLengthSlider", values=c(apptTable[["30"]], 
+                                                         apptTable[["45"]],
+                                                         apptTable[["60"]]))
+    
+    # replicate refs for 10 years
+    x=refs
+    for (i in 1:5) {
+      x$RefDate = x$RefDate + 365
+      refs = rbind(refs, x)
+    }
+    cat("Replicated 2013 * 5 times\n")
+    return(refs)
+  })
+  
+  getWaiting = reactive({
+    startDate = getStartDate()
+    waiting = Data2014 %>%
+      filter(RefDate < startDate, ApptDate > startDate) %>%
+      select(RefDate, ApptLength, OutpatientFlag) %>%
+      arrange(OutpatientFlag, RefDate) %>%
+      convert90s()
+    updateNumericInput(session, "waitingList", value=nrow(waiting))
+    return(waiting)
+  })
   
   getSimulation = reactive({
     
@@ -61,11 +80,11 @@ shinyServer(function(input, output, session) {
     # Session timetables
     consultantSessionsPerWeek = input$consultantSessionsPerWeek
     regSessionsPerWeek = input$regSessionsPerWeek
-    #consultantTemplate = list(n60=1, n45=3)
-    #regTemplate = list(n30=2)
     
     # start vals
-    startDate = as.Date("2013-01-01")
+    startDate = getStartDate()
+    refs = getReferrals()
+    waiting = getWaiting()
     done = data.frame()
     numWaitingTally = c()
     num30WaitingTally = c()
@@ -146,16 +165,11 @@ shinyServer(function(input, output, session) {
     stats = data.frame(week = 1:simDuration, newRef = numNewRefHx, 
                        appts = numApptHx, mismatch = (numApptHx - numNewRefHx),
                        timeWaiting = timeWaitingTally,
+                       sdTimeWaiting = sd(thisWeekAppts$DaysWaiting),
                        defects = defectTally,
                        numWaiting = numWaitingTally, num30Waiting = num30WaitingTally, num45Waiting = num45WaitingTally, num60Waiting = num60WaitingTally)
     return(stats)
   })
-  
-  observe({
-    year = input$referralYear
-    if (year == "2011")
-      updateDkSlider(session, "apptLengthSlider", values=c(2,60,80))
-  }, priority=1)
   
   observe({
     apptLengths = input$apptLengthSlider
@@ -196,7 +210,15 @@ shinyServer(function(input, output, session) {
       geom_hline(yintercept=120, color="red")
     
     multiplot(x1,x2,x3, x4,x5, cols=1)
-  }, height=800)
+  }, height=800) 
+  
+  output$tsplot = renderDygraph({
+    stats = getSimulation()
+    numWaiting.xts = xts(stats$numWaiting, as.Date("2013-01-01") + (stats$week*7))
+    
+    dygraph(numWaiting.xts) %>%
+      dyRangeSelector()
+  })
   
 }
 )
