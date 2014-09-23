@@ -10,8 +10,11 @@ shinyUI(fluidPage(
       
       dkAccordion(
         dkAccordionPanel("referralPanel", "Referral Setup",
-          helpText("Distribution of appointment lengths for new referrals."),
           selectInput("referralYear", label="Based on year:", choices=c("2010","2011","2012","2013"), selected="2012"),
+          fluidRow(
+            column(width=6, numericInput("refTotal", label="Total Referrals", value=0)),
+            column(width=4, numericInput("waitingList", label="WL @ Jan 1st", value=0))
+          ),
           dkSliderInput("apptLengthSlider", values=c(20,60,90), min=0, max = 100),
           fluidRow(
             column(width=4, numericInput("appt30", label="30 min", value=0)),
@@ -49,8 +52,10 @@ shinyUI(fluidPage(
     ),
     
     mainPanel(
-      plotOutput("plots"),
-      textOutput("testOutput")
+      tabsetPanel(
+        tabPanel("Dashboard", plotOutput("plots", height="800px")),
+        tabPanel("Interactive", dygraphOutput("tsplot"))
+      )
     )
   )
 ))
