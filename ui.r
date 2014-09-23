@@ -10,7 +10,7 @@ shinyUI(fluidPage(
       
       dkAccordion(
         dkAccordionPanel("referralPanel", "Referral Setup",
-          selectInput("referralYear", label="Based on year:", choices=c("2010","2011","2012","2013"), selected="2012"),
+          selectInput("referralYear", label="Based on year:", choices=c("2010","2011","2012","2013"), selected="2013"),
           fluidRow(
             column(width=6, numericInput("refTotal", label="Total Referrals", value=0)),
             column(width=4, numericInput("waitingList", label="WL @ Jan 1st", value=0))
@@ -29,7 +29,7 @@ shinyUI(fluidPage(
         helpText("Consultant Setup"),
         sliderInput("consultantSessionsPerWeek", 
                     label = "Sessions Per Week:",
-                    min = 0, max = 20, value = 5),
+                    min = 0, max = 20, value = 4),
         textInput("consultantTemplate", 
                   label = "Template: ",
                   value = "60,45,45,45")
@@ -38,7 +38,7 @@ shinyUI(fluidPage(
         helpText("Registrar Setup"),
         sliderInput("regSessionsPerWeek", 
                     label = "Sessions Per Week:",
-                    min = 0, max = 20, value = 3),
+                    min = 0, max = 20, value = 2),
         textInput("regTemplate", 
                   label = "Template: ",
                   value = "30,30,30")
