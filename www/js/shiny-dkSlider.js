@@ -9,19 +9,18 @@ $.extend(dkSliderInputBinding, {
   getValue: function(el) {
     
     var data_encoded = $(el).uislider("values");
-    console.log(data_encoded);
+    console.log("getValue ", data_encoded);
     return data_encoded;
-    
-    return JSON.stringify(data_encoded);
   },
   
   setValue: function(el, value) {
-    console.log("setvalue", value);
+    console.log("setvalues ", value);
     $(el).uislider("values", value);
+    $(el).css('background-image', getSliderColors(value));
   },
   
   subscribe: function(el, callback) {
-    $(el).on('slidechange.dkSlider', function(e) { callback(); console.log("change");});
+    $(el).on('slidechange.dkSlider', function(e) { console.log("change"); callback(); });
   },
   
   unsubscribe: function(el) {
@@ -29,7 +28,7 @@ $.extend(dkSliderInputBinding, {
   },
   
   receiveMessage: function(el, data) {
-    console.log("message", data);
+    console.log("receive message ", data);
     if (data.hasOwnProperty('values'))
       this.setValue(el, data.values);
     
