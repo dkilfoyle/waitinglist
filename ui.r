@@ -1,4 +1,5 @@
 source("R/dkwidgets.R")
+library(dygraphs)
 
 shinyUI(fluidPage(
   titlePanel("EMG Waiting List Simulation"),
