@@ -5,6 +5,7 @@ library(tidyr)
 library(dkslider)
 library(lubridate)
 library(dygraphs)
+library(xts)
 source("utils.r")
 
 convert90s = function(x) {
